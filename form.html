@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>WakeOnLan</title>
+
+  <!-- Встроенные стили -->
+  <style>
+    /* Сброс стилей */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      color: rgb(27, 158, 27);
+    }
+
+    /* Основной контейнер */
+    body {
+      min-height: 90vh;
+      padding: 20px;
+      background-color: black;
+    }
+
+    /* Форма */
+    form {
+      padding: 20px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    /* Метка (label) */
+    label {
+      display: block;
+      font-size: 16px;
+    }
+
+    /* Поле ввода */
+    input[type="text"] {
+      width: 100%;
+      font-size: 16px;
+    }
+    input {
+      background-color: black;
+    }
+    input[list]::-webkit-datalist { /* Для Chrome, Safari и других WebKit-браузеров */
+      color: rgb(27, 158, 27);
+      border: 1px solid #008000; /* Граница выпадающего списка */
+    }
+
+    /* Кнопка */
+    button {
+      width: 100%;
+      font-size: 16px;
+      background-color: black;
+    }
+
+    /* Адаптация под мобильные устройства */
+    @media (max-width: 600px) {
+      label, input, button {
+        font-size: 14px;
+        padding: 5px;
+      }
+
+      form {
+        padding: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <form action="/wol" method="post">
+    <h2>WakeOnLan Utility v0.2</h2><br>
+    
+    <!-- Поле ввода -->
+    <input list="options" name="mac-address" id="customOption" placeholder="Введите или выберите из списка">
+
+    <!-- Выпадающий список -->
+    <datalist id="options">
+      <option value="00-E2-69-8C-BE-15">
+    </datalist>
+
+    <br><br>
+    <!-- Кнопка отправки -->
+    <button type="submit">Разбудить компьютер</button>
+    <br><br>
+    <button type="button">Сканер локальной сети</button>
+  </form>
+
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Сканер локальной сети</title>
+
+  <!-- Метатег для мобильных устройств -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      color: rgb(27, 158, 27);
+      font-family: monospace;
+    }
+
+    body {
+      background-color: black;
+      padding: 10px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 0 10px;
+    }
+
+    form {
+      width: 100%;
+      padding: 20px;
+      background-color: #111;
+      border-radius: 8px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 16px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      font-size: 16px;
+      margin-bottom: 16px;
+      background-color: black;
+      color: rgb(27, 158, 27);
+      border: 1px solid rgb(27, 158, 27);
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      background-color: black;
+      color: rgb(27, 158, 27);
+      border: 1px solid rgb(27, 158, 27);
+      cursor: pointer;
+    }
+
+    ul {
+      list-style-type: none;
+      margin-top: 20px;
+    }
+
+    li {
+      margin-bottom: 5px;
+    }
+
+    #output {
+      white-space: pre-wrap;
+      background-color: #111;
+      padding: 10px;
+      margin-top: 20px;
+      border-left: 4px solid rgb(27, 158, 27);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <form id="scanForm">
+      <h2>Сканер локальной сети</h2><br>
+
+      <h3>Список адаптеров:</h3>
+      <ul>
+        {{range .Items}}
+          <li>{{.}}</li>
+        {{end}}
+      </ul>
+
+      <label for="adapter-num">Номер адаптера</label>
+      <input type="text" name="adapter-num" id="adapter-num" placeholder="Введите номер адаптера" required>
+
+      <label for="cidr">CIDR подсети</label>
+      <input type="text" name="cidr" id="cidr" placeholder="Пример: 192.168.1.0/24" required>
+
+      <button type="submit">Сканировать локальную сеть</button>
+    </form>
+  </div>
+
+  <div class="container">
+    <pre id="output"></pre>
+  </div>
+
+  <script>
+    let ws = null;
+    let reconnectAttempts = 0;
+    const wsURL = "ws://192.168.1.66:8989/ws"; // Замени на свой IP или wss:// если есть SSL
+
+    function connectWebSocket() {
+      if (ws) return;
+
+      ws = new WebSocket(wsURL);
+
+      ws.onopen = () => {
+        console.log("✅ Подключено");
+        document.getElementById('output').textContent += "✅ Соединение установлено\n";
+        reconnectAttempts = 0;
+      };
+
+      ws.onmessage = function(event) {
+        const output = document.getElementById('output');
+        output.textContent += event.data + '\n';
+      };
+
+      ws.onclose = () => {
+        console.log("⚠️ Соединение закрыто");
+        ws = null;
+
+        setTimeout(() => {
+          console.log(`🔄 Попытка переподключения ${reconnectAttempts + 1}`);
+          reconnectAttempts++;
+          connectWebSocket();
+        }, 3000);
+      };
+
+      ws.onerror = (err) => {
+        console.error("❌ Ошибка WebSocket:", err);
+        ws = null;
+      };
+    }
+
+    // Подключаемся при загрузке страницы
+    connectWebSocket();
+
+
+    // Обработка формы без перезагрузки
+    document.getElementById('scanForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const formData = new FormData(this);
+
+      const output = document.getElementById('output');
+      output.textContent = 'Сканирование начато...\n';
+
+      fetch('/scan', {
+        method: 'POST',
+        body: new URLSearchParams(formData)
+      }).catch(err => {
+        output.textContent += `❌ Ошибка при отправке формы: ${err}\n`;
+      });
+    });
+  </script>
+
+</body>
+</html>
