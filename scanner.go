@@ -57,8 +57,10 @@ func scan(ctx context.Context, cidr string, adapterNum int, ch chan string) erro
 				defer wg.Done()
 				select {
 				case <-ctx.Done():
+					fmt.Print(1)
 					return
 				default:
+					fmt.Print(2)
 					localARP := arp
 					localARP.DstProtAddress = []byte(ip.To4())
 
@@ -87,6 +89,7 @@ func scan(ctx context.Context, cidr string, adapterNum int, ch chan string) erro
 			flag = true
 		case <-ctx.Done():
 			flag = true
+			fmt.Println("Отменаааа")
 		default:
 			packedData, _, err := handle.ReadPacketData()
 			if err != nil {
@@ -102,6 +105,7 @@ func scan(ctx context.Context, cidr string, adapterNum int, ch chan string) erro
 			}
 		}
 	}
+	fmt.Println(90)
 	return nil
 }
 

@@ -3,8 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <title>Сканер локальной сети</title>
-
-  <!-- Метатег для мобильных устройств -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
@@ -98,6 +96,9 @@
       <label for="cidr">CIDR подсети</label>
       <input type="text" name="cidr" id="cidr" placeholder="Пример: 192.168.1.0/24" required>
 
+      <!-- Скрытое поле для передачи session_id -->
+      <input type="hidden" name="session_id" id="session_id" value="">
+
       <button type="submit">Сканировать локальную сеть</button>
     </form>
   </div>
@@ -106,65 +107,45 @@
     <pre id="output"></pre>
   </div>
 
-  <script>
-    let ws = null;
-    let reconnectAttempts = 0;
-    const wsURL = "ws://192.168.1.66:8989/ws"; // Замени на свой IP или wss:// если есть SSL
+<script>
+const output = document.getElementById('output');
+let ws = null;
 
-    function connectWebSocket() {
-      if (ws) return;
+function connectWebSocket() {
+  if (ws) ws.close();
+  ws = new WebSocket("ws://192.168.1.66:8989/ws");
 
-      ws = new WebSocket(wsURL);
+  ws.onopen = () => log("✅ Соединение установлено");
+  ws.onmessage = e => log(e.data);
+  ws.onclose = () => setTimeout(connectWebSocket, 3000);
+  ws.onerror = () => ws.close();
+}
 
-      ws.onopen = () => {
-        console.log("✅ Подключено");
-        document.getElementById('output').textContent += "✅ Соединение установлено\n";
-        reconnectAttempts = 0;
-      };
+function log(msg) {
+  output.textContent += msg + '\n';
+}
 
-      ws.onmessage = function(event) {
-        const output = document.getElementById('output');
-        output.textContent += event.data + '\n';
-      };
+// Функция для очистки поля вывода
+function clearOutput() {
+  output.textContent = ''; // Очищаем содержимое
+  log("✨ Новое сканирование началось"); // Логируем начало нового сканирования
+}
 
-      ws.onclose = () => {
-        console.log("⚠️ Соединение закрыто");
-        ws = null;
+document.getElementById('scanForm').addEventListener('submit', function(e) {
+  e.preventDefault();
 
-        setTimeout(() => {
-          console.log(`🔄 Попытка переподключения ${reconnectAttempts + 1}`);
-          reconnectAttempts++;
-          connectWebSocket();
-        }, 3000);
-      };
+  // Очищаем поле вывода перед новым сканированием
+  clearOutput();
 
-      ws.onerror = (err) => {
-        console.error("❌ Ошибка WebSocket:", err);
-        ws = null;
-      };
-    }
+  const formData = new FormData(this);
+  fetch('/scan', {
+    method: 'POST',
+    body: new URLSearchParams(formData)
+  }).catch(err => log(`❌ Ошибка запроса: ${err}`));
+});
 
-    // Подключаемся при загрузке страницы
-    connectWebSocket();
-
-
-    // Обработка формы без перезагрузки
-    document.getElementById('scanForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-
-      const formData = new FormData(this);
-
-      const output = document.getElementById('output');
-      output.textContent = 'Сканирование начато...\n';
-
-      fetch('/scan', {
-        method: 'POST',
-        body: new URLSearchParams(formData)
-      }).catch(err => {
-        output.textContent += `❌ Ошибка при отправке формы: ${err}\n`;
-      });
-    });
-  </script>
+connectWebSocket();
+</script>
 
 </body>
 </html>
